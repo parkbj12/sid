@@ -8,7 +8,7 @@ import openai
 import chardet
 
 # OpenAI API 키 설정
-openai.api_key = ''
+api_key = st.secrets["google_api_key"]
 # CSV 파일 경로 설정
 FILE_PATH = '서울시 생활체육포털(3만).csv'
 
