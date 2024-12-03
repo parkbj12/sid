@@ -8,7 +8,7 @@ import openai
 import chardet
 
 # OpenAI API 키 설정
-api_key = st.secrets["google_api_key"]
+openai.api_key = ''
 # CSV 파일 경로 설정
 FILE_PATH = '서울시 생활체육포털(3만).csv'
 
@@ -170,10 +170,34 @@ elif menu == "추천 시스템":
         user_input = f"{region} {target}"
         recommendations = recommend_program(user_input, rec_data)
         st.dataframe(recommendations)
-    
+ # OpenAI API 키를 받아서 응답을 생성하는 함수
+def generate_response(user_message, api_key):
+    # OpenAI API 키 설정
+    openai.api_key = api_key
 
-elif menu == "챗봇":
+    # OpenAI GPT-3.5 Turbo 모델에 요청 보내기 (v1/chat/completions 엔드포인트 사용)
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # GPT-3.5 Turbo 모델 사용
+        messages=[{"role": "user", "content": user_message}]  # 메시지 형식에 맞게 작성
+    )
+
+    return response['choices'][0]['message']['content']  # 응답 텍스트 반환
+   
+# 챗봇 페이지일 때 API 키 입력 받기
+if menu == "챗봇":
     st.subheader("🏋️GYM 챗봇🏋️")
+    
+    # API 키 입력 필드
+    openai_api_key = st.sidebar.text_input("OpenAI API 키를 입력하세요", type="password")
+
+    # API 키가 입력되었는지 확인
+    if openai_api_key:
+        st.session_state['openai_api_key'] = openai_api_key
+        st.write("API 키가 저장되었습니다.")
+    else:
+        st.write("API 키를 입력하세요.")
+
+    # 챗봇 기능을 여기에 추가
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []
 
@@ -182,9 +206,11 @@ elif menu == "챗봇":
     if st.button("전송"):
         if user_message:
             st.session_state["chat_history"].append({"role": "user", "content": user_message})
-            response = generate_response(user_message)
+            # 챗봇 응답 생성 (API 키 사용)
+            response = generate_response(user_message, openai_api_key)  # 두 번째 인자로 API 키 전달
             st.session_state["chat_history"].append({"role": "assistant", "content": response})
 
+    # 채팅 기록 출력
     for message in st.session_state["chat_history"]:
         if message["role"] == "user":
             st.markdown(f"**사용자:** {message['content']}")
